@@ -25,19 +25,20 @@ const getComponents = ({response}: {response: any}) => {
 }
 
 const getComponent = ({response}: {response: any}) => {
+    response.body = "getcomponent 1";
 
 }
 
 const addComponent = ({response}: {response: any}) => {
-
+    response.body = "add";
 }
 
 const updateComponent = ({response}: {response: any}) => {
-
+    response.body = "update";
 }
 
 const deleteComponent = ({response}: {response: any}) => {
-
+    response.body = "delete";
 }
 
-export {getComponents}
+export {getComponents, getComponent, addComponent, updateComponent, deleteComponent}
