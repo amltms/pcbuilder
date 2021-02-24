@@ -1,11 +1,11 @@
 import { Router } from "https://deno.land/x/oak/mod.ts";
-import { getComponents} from './controllers/components.ts';
-
+import { getComponents, getComponent, addComponent, updateComponent, deleteComponent} from './controllers/components.ts';
 const router = new Router();
 router
-  .get("/", (context) => {
-    context.response.body = "Hello world!";
-  })
-  .get("/components", getComponents);
+  .get("/components", getComponents)
+  .get("/components/:id", getComponent)
+  .post("/components", addComponent)
+  .put("/components/:id", updateComponent)
+  .delete("/components/:id", deleteComponent)
 
 export default router;
