@@ -1,68 +1,74 @@
-import {v4} from 'https://deno.land/std/uuid/mod.ts';
 import { Component } from '../types.ts';
-let components = [
+import {v4} from 'https://deno.land/std/uuid/mod.ts';
+import {Status}  from "https://deno.land/x/oak/mod.ts";
+
+  let components = [
     {
-        id:"1",
-        name: "AMD Ryzen 5 3600 CPU",
-        type: "cpu",
-        price: 150.00
+      id:"1",
+      name: "AMD Ryzen 5 3600 CPU",
+      type: "cpu",
+      price: 200
     },
     {
-        id:"2",
-        name: "GIGABYTE motherboard",
-        type: "motherboard",
-        price: 90.00
+      id:"2",
+      name: "GIGABYTE motherboard",
+      type: "motherboard",
+      price: 100
     },
 ];
 
-//@desc get all components
-//@route get /components
+const home = ({ response}: { response: any}) => {
+    response.body = "Hello world!";
+}
 
-const getComponents = ({response}: {response: any}) => {
-    response.body = { 
-        sucess: true,
-        data: components
-    }
+const getComponents = ({ response}: { response: any}) => {
+    response.body = components
 }
 
 const getComponent = ({params, response}: {params: {id: string}, response: any}) => {
-    const component: Component|undefined = components.find(p => p.id === params.id)
-    if (component){
-        response.status = 200;
-        response.body = {
-            sucess: true,
-            data: component
-        }
-    }else{
-        response.status = 404;
-        response.body = {
-            sucess:false,
-            msg: 'Component not found'
-        }
+  const component: Component|undefined = components.find(p => p.id === params.id)
+  if (component){
+    response.status = 200;
+    response.body = {
+        sucess: true,
+        data: component
     }
+  }else{
+      response.status = 404;
+      response.body = {
+          sucess:false,
+          msg: 'component not found'
+      }
+  }
 }
 
 const addComponent = async({request, response}: {request: any, response: any}) => {
-    const body = await request.body();
-    if (!request.hasBody) {
-      response.status = 400;
-      response.body = {
-        success: false,
-        message: "No data provided",
-      };
-      return;
-    }
-    console.log(body.value);
+  console.log("post component");
+  if (!request.hasBody) {
+    response.status = Status.BadRequest
+    response.body = {
+      success: false,
+      message: "No data provided",
+    };
+    return;
+  }
+  const body = request.body();
+  
+  let component: Component | undefined;
+  if (body.type === "json") {
+    component = await body.value;
+  }
 
-    
+  if (component) {
+    component.id = v4.generate();
+    components.push(component)
+    response.status = Status.OK;
+    response.body = component;
+    response.type = "json";
+    return;
+  }
+  throw(Status.BadRequest, "Bad Request");
 }
 
-const updateComponent = ({response}: {response: any}) => {
-    response.body = "update";
-}
 
-const deleteComponent = ({response}: {response: any}) => {
-    response.body = "delete";
-}
-
-export {getComponents, getComponent, addComponent, updateComponent, deleteComponent}
+export {home, getComponents, addComponent, getComponent}
