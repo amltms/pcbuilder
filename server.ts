@@ -6,7 +6,7 @@ import {
   Status,
 }  from "https://deno.land/x/oak/mod.ts";
   
-import router from './routes.ts';
+import router from './routes/components.ts';
 const app = new Application();
   
 // Logger
