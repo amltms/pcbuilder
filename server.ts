@@ -1,14 +1,11 @@
 import {bold,cyan,green} from "https://deno.land/std@0.84.0/fmt/colors.ts";
-import {
-  Application,
-  Context,
-  isHttpError,
-  Status,
-}  from "https://deno.land/x/oak/mod.ts";
-  
+import {Application, isHttpError}  from "https://deno.land/x/oak/mod.ts";
+import "https://deno.land/x/dotenv/load.ts";
+
 import router from './routes/components.ts';
+const port = Deno.env.get("PORT") || 4000;
 const app = new Application();
-  
+
 // Logger
 app.use(async (context, next) => {
   await next();
@@ -51,11 +48,12 @@ app.use(async (context, next) => {
       console.log(err);
       throw err;
     }
+    
   }
 });
-  
+
   // Use the router
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-await app.listen({ port: 5000 });
+await app.listen({ port: +port });

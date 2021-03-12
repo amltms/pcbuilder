@@ -34,7 +34,7 @@ const getComponent = ({params, response}: {params: {id: string}, response: any})
       data: component
     }
   }else{
-    response.status = 404;
+    response.status = Status.NoContent;
     response.body = {
       sucess:false,
       msg: 'component not found'
