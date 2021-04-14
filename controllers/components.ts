@@ -1,97 +1,165 @@
-import { Component } from '../types.ts';
-import {v4} from 'https://deno.land/std/uuid/mod.ts';
+import { Component } from '../models/component.ts';
 import {Status}  from "https://deno.land/x/oak/mod.ts";
+import { Client } from "https://deno.land/x/postgres/mod.ts";
+import {dbCreds} from '../config.ts';
 
-let components = [
-  {
-    id:"1",
-    name: "AMD Ryzen 5 3600 CPU",
-    type: "cpu",
-    price: 200
-  },
-  {
-    id:"2",
-    name: "GIGABYTE motherboard",
-    type: "motherboard",
-    price: 100
-  },
-];
+//init client
+const client = new Client(dbCreds);
 
-const getComponents = ({ response}: { response: any}) => {
-  response.status = Status.OK;
-    response.body = {
-      sucess: true,
-      data:components
-    };
+const getComponents = async ({ response}: { response: any}) => {
+    try {
+        await client.connect();
+        const result = await client.queryObject("SELECT * FROM components");
+
+        response.status = Status.OK;
+        response.body = {
+        sucess: true,
+        data: result.rows
+        }
+    } catch (err) {
+        response.status = Status.BadRequest;
+        response.body = {
+            sucess:false,
+            msg: err.toString()
+        }  
+    }finally{
+        await client.end()
+    }
+
 }
 
-const getComponent = ({params, response}: {params: {id: string}, response: any}) => {
-  const component: Component|undefined = components.find(c => c.id === params.id)
-  if (component){
-    response.status = Status.OK;
-    response.body = {
-      sucess: true,
-      data: component
+const getComponent = async({params, response}: {params: {id: string}, response: any}) => {
+    try {
+        await client.connect()
+        const result = await client.queryObject
+        `SELECT * from components WHERE id = (${params.id})`;
+        if(result.rows.toString() === ""){
+            response.status = Status.NotFound
+            response.body = {
+                success: false,
+                msg: 'No component found'
+            }
+            return;
+        }else{
+            response.status = Status.OK;
+            response.body = {
+                success: true,
+                data: result.rows
+            }
+        }
+    } catch (err) {
+        response.status =Status.BadRequest
+        response.body = {
+        succes: false,
+        msg: err.toString()
+        }
+    }finally{
+        await client.end()
     }
-  }else{
-    response.status = Status.NoContent;
-    response.body = {
-      sucess:false,
-      msg: 'component not found'
-    }
-  }
 }
 
 const addComponent = async({request, response}: {request: any, response: any}) => {
-  if (!request.hasBody) {
-    response.status = Status.BadRequest
-    response.body = {
-      success: false,
-      message: "No data provided",
-    };
-    return;
-  }else{
-    const body = request.body();
-    const component: Component = await body.value;
-    component.id = v4.generate();
-    components.push(component)
-    response.status = Status.OK;
-    response.body = {
-      sucess: true,
-      data:component
-    };
-  }
-  
+    if (!request.hasBody) {
+        response.status = Status.BadRequest
+        response.body = {
+            success: false,
+            message: "No data provided",
+        };
+        return;
+    }else{
+        const body = request.body();
+        const component: Component = await body.value;
+        try{
+            await client.connect();
+            const result = await client.queryObject
+                `INSERT INTO components(name,type,price) VALUES(${component.name},${component.type},${component.price})`;
+            response.status = Status.Accepted;
+            response.body = {
+                success:true,
+                data: component
+            }
+        }catch(err){
+            response.status = Status.BadRequest;
+            response.body = {
+                sucess:false,
+                msg: err.toString()
+            }
+        }finally {
+            await client.end()
+        }
+    }
 }
 
 
 const updateComponent = async({params, request, response}: {params: {id: string}, request: any, response: any}) => {
-  const component: Component|undefined = components.find(c => c.id === params.id)
-  if (component){
-    const body =  request.body()
-    const updateData: {name?: string, type?: string, price?: number} = await body.value;
-    components = components.map(c => c.id === params.id ? {...c, ...updateData} : c)
-    response.status = Status.OK;
-    response.body = {
-      success:true,
-      data: components
+    await getComponent({params: {"id": params.id}, response})
+    if(response.status === Status.NotFound){
+        response.body = {
+            success: false,
+            msg: response.body.msg
+        }
+        response.status = Status.NotFound;
+        return
+    }else {
+        if (!request.hasBody) {
+        response.status = Status.BadRequest
+        response.body = {
+            success: false,
+            message: "No data provided",
+        };
+        return;
+        }else{
+            const body = request.body();
+            const component: Component = await body.value;
+            try{
+                await client.connect();
+                const result = await client.queryObject
+                    `UPDATE components SET name=${component.name}, type=${component.type}, price=${component.price} WHERE id=${params.id}`;
+                response.status = Status.Accepted;
+                response.body = {
+                    success:true,
+                    data: result
+                }
+            }catch(err){
+                response.status = Status.BadRequest;
+                response.body = {
+                    sucess:false,
+                    msg: err.toString()
+            }
+            }finally {
+                await client.end()
+            }
+        }
     }
-  }else{
-    response.status = Status.NoContent;
-    response.body = {
-      sucess:false,
-      msg: 'Component not found'
-    }
-  }
 }
 
 
 const deleteComponent = async({params, response}: {params: {id: string}, response: any}) => {
-  components = components.filter(c => c.id !== params.id)
-  response.body={
-    success: true,
-    msg: 'Component Removed'
-  }
+    await getComponent({params: {"id": params.id}, response})
+    if(response.status === Status.NotFound){
+        response.body = {
+            success: false,
+            msg: response.body.msg
+        }
+        response.status = Status.NotFound;
+        return
+    }else {
+        try {
+            await client.connect()
+            const result = await client.queryObject(`DELETE FROM components WHERE id=${params.id}`)
+            response.body = {
+                success: true,
+                msg: 'Product deleted'
+            }
+            response.status = Status.NoContent
+        } catch (err) {
+            response.status = Status.BadRequest
+            response.body = {
+                success: false,
+                msg: err.toString()
+            }
+        }
+    }
 }
 
 export { getComponents, getComponent, addComponent, updateComponent, deleteComponent}

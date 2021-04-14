@@ -3,12 +3,12 @@ import {getComponents, getComponent, addComponent, updateComponent, deleteCompon
 
 const router = new Router();
 
-  router
-    .get("/component", getComponents)
-    .post("/component", addComponent)
-    .get("/component/:id", getComponent)
-    .put("/component/:id", updateComponent)
-    .delete("/component/:id", deleteComponent);
+    router
+        .get("/component", getComponents)
+        .post("/component", addComponent)
+        .get("/component/:id", getComponent)
+        .put("/component/:id", updateComponent)
+        .delete("/component/:id", deleteComponent);
 
 export default router;
 
