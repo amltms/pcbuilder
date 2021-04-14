@@ -31,7 +31,8 @@ const getComponents = async ({ response}: { response: any}) => {
 const getComponent = async({params, response}: {params: {id: string}, response: any}) => {
     try {
         await client.connect()
-        const result = await client.queryObject(`SELECT * from components WHERE id = (${params.id})`);
+        const result = await client.queryObject
+        `SELECT * from components WHERE id = (${params.id})`;
         if(result.rows.toString() === ""){
             response.status = Status.NotFound
             response.body = {
