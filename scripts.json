@@ -7,7 +7,8 @@
   ],
   "scripts": {
     "start": {
-      "cmd": "deno run server.ts"
+      "cmd": "deno run server.ts",
+      "unstable": true
     }
   }
 }
